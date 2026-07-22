@@ -1,0 +1,45 @@
+import torch
+
+from src.models.mlp import TransactionClassifier
+
+
+def save_model(
+    model,
+    model_path,
+    input_size,
+    num_classes,
+    classes,
+):
+    checkpoint = {
+        "model_state_dict": model.state_dict(),
+        "input_size": input_size,
+        "num_classes": num_classes,
+        "classes": classes,
+    }
+
+    torch.save(checkpoint, model_path)
+
+    print(f"\nModel saved successfully:\n{model_path}")
+
+
+def load_model(model_path, device):
+
+    checkpoint = torch.load(
+        model_path,
+        map_location=device,
+    )
+
+    model = TransactionClassifier(
+        input_size=checkpoint["input_size"],
+        num_classes=checkpoint["num_classes"],
+    )
+
+    model.load_state_dict(
+        checkpoint["model_state_dict"]
+    )
+
+    model.to(device)
+
+    model.eval()
+
+    return model, checkpoint
