@@ -2,62 +2,63 @@ def get_error_details(prediction):
 
     rules = {
 
-        "Successful Transfer": {
+        "No Error": {
             "reverse": False,
             "action": "No Action Required",
-            "reason": "Transaction completed successfully.",
+            "reason": "No transaction error detected.",
             "severity": "None",
         },
 
-
-        "Partial Processing": {
+        "Duplicate Transaction": {
             "reverse": True,
-            "action": "Reverse Transaction",
-            "reason": "Debit completed but credit processing failed.",
+            "action": "Reverse Duplicate Transaction",
+            "reason": "The same transaction appears to have been processed more than once.",
             "severity": "High",
         },
 
-
-        "Invalid Account": {
+        "Incorrect Amount Entry": {
             "reverse": True,
-            "action": "Reverse Transaction",
-            "reason": "Destination account information is invalid.",
+            "action": "Reverse and Correct Amount",
+            "reason": "The transaction amount differs from the intended amount.",
             "severity": "High",
         },
 
-
-        "Insufficient Funds": {
+        "Pending Review": {
             "reverse": False,
-            "action": "Reject Transaction",
-            "reason": "Sender account does not have sufficient balance.",
+            "action": "Hold for Investigation",
+            "reason": "The transaction requires manual verification before further action.",
             "severity": "Medium",
         },
 
-
-        "Beneficiary Mismatch": {
+        "Technical Glitch / Timeout": {
             "reverse": True,
-            "action": "Reverse Transaction",
-            "reason": "Beneficiary details do not match transaction information.",
+            "action": "Retry or Reverse Transaction",
+            "reason": "A processing timeout or technical failure occurred during the transaction.",
             "severity": "High",
         },
 
-
-        "Pending Settlement": {
+        "Unauthorized Reversal Request": {
             "reverse": False,
-            "action": "Monitor Transaction",
-            "reason": "Transaction is awaiting settlement confirmation.",
-            "severity": "Low",
+            "action": "Reject Request",
+            "reason": "The reversal request is not authorized and requires security verification.",
+            "severity": "Critical",
+        },
+
+        "Wrong Beneficiary": {
+            "reverse": True,
+            "action": "Reverse Transaction",
+            "reason": "Funds were sent to an unintended beneficiary.",
+            "severity": "Critical",
         },
 
     }
 
-
     return rules.get(
         prediction,
         {
-            "reverse": True,
+            "reverse": False,
             "action": "Manual Review",
-            "reason": "Unknown transaction error.",
+            "reason": "Unknown transaction status.",
             "severity": "Medium",
-        }
+        },
     )

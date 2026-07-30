@@ -16,6 +16,15 @@ SCALER_PATH = BASE_DIR / "saved_models/scaler.pkl"
 
 METADATA_PATH = BASE_DIR / "saved_models/model_metadata.json"
 
+ERROR_MODEL_PATH = BASE_DIR / "saved_models/error_detector.pth"
+REASON_MODEL_PATH = BASE_DIR / "saved_models/reason_classifier.pth"
+
+ERROR_ENCODER_PATH = BASE_DIR / "saved_models/error_encoders.pkl"
+REASON_ENCODER_PATH = BASE_DIR / "saved_models/reason_encoders.pkl"
+
+ERROR_SCALER_PATH = BASE_DIR / "saved_models/error_scaler.pkl"
+REASON_SCALER_PATH = BASE_DIR / "saved_models/reason_scaler.pkl"
+
 # ===========================
 # Training
 # ===========================
