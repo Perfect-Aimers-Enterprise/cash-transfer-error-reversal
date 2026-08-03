@@ -24,17 +24,15 @@ app.add_middleware(
 # ==========================================
 
 class Transaction(BaseModel):
-    transaction_id: str
-    sender_account: int
-    receiver_account: int
+    transfer_id: str
+    sender_id: str
+    beneficiary_id: str
     amount: float
     timestamp: str
-    debit_status: str
-    credit_status: str
-    account_valid: bool
-    beneficiary_match: bool
-    retry_count: int
-    transaction_type: str
+    channel: str
+    location: str
+    device_id: str
+    session_id: str
 
 
 # ==========================================
