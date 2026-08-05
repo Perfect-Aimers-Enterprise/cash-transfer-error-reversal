@@ -25,6 +25,7 @@ def plot_bar(metric_key, title, ylabel):
     plt.grid(axis="y", alpha=0.3)
     plt.tight_layout()
     plt.show()
+    plt.close()
 
 def plot_confusion_counts():
 
