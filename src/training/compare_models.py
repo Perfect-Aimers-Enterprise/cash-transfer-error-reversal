@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-metric_dir = Path("metrics")
+metric_dir = Path("src/metrics")
 
 models = []
 
@@ -12,6 +12,9 @@ for file in metric_dir.glob("*.json"):
         models.append(json.load(f))
 
 names = [m["model"] for m in models]
+
+print("Models loaded:", len(models))
+print(models)
 
 
 def plot_bar(metric_key, title, ylabel):
