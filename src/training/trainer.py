@@ -8,6 +8,7 @@ from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
 )
+from sklearn.metrics import roc_auc_score
 
 def train_model(
     model,
@@ -23,6 +24,7 @@ def train_model(
 
     loss_history = []
     accuracy_history = []
+    roc_auc_history = []
 
     for epoch in range(epochs):
 
@@ -31,6 +33,9 @@ def train_model(
         running_loss = 0.0
         correct = 0
         total = 0
+
+        epoch_labels = []
+        epoch_probs = []
 
         for features, labels in train_loader:
 
@@ -49,27 +54,57 @@ def train_model(
 
             running_loss += loss.item()
 
+            # -----------------------------
+            # Accuracy
+            # -----------------------------
+
+            probs = torch.softmax(outputs, dim=1)
+
             _, predicted = torch.max(outputs, 1)
 
             correct += (predicted == labels).sum().item()
 
             total += labels.size(0)
 
+            # -----------------------------
+            # Save data for ROC-AUC
+            # -----------------------------
+
+            epoch_labels.extend(
+                labels.cpu().numpy()
+            )
+
+            epoch_probs.extend(
+                probs[:, 1].detach().cpu().numpy()
+            )
+
         avg_loss = running_loss / len(train_loader)
+
         train_accuracy = correct / total
+
+        train_auc = roc_auc_score(
+            epoch_labels,
+            epoch_probs,
+        )
 
         loss_history.append(avg_loss)
         accuracy_history.append(train_accuracy)
+        roc_auc_history.append(train_auc)
 
         print(
             f"Epoch [{epoch + 1}/{epochs}] "
             f"Loss: {avg_loss:.4f} "
-            f"Accuracy: {train_accuracy * 100:.2f}%"
+            f"Accuracy: {train_accuracy * 100:.2f}% "
+            f"ROC-AUC: {train_auc:.4f}"
         )
 
     print("\nTraining Finished!\n")
 
-    return loss_history, accuracy_history
+    return (
+        loss_history,
+        accuracy_history,
+        roc_auc_history,
+    )
 
 # def evaluate_model(
 #     model,
@@ -109,9 +144,10 @@ def train_model(
 #                 dim=1,
 #             )
 
-#             # -----------------------------
+#             # ----------------------------------------
 #             # Binary Classification
-#             # -----------------------------
+#             # ----------------------------------------
+
 #             if outputs.shape[1] == 2:
 
 #                 positive_probs = probs[:, 1]
@@ -124,9 +160,10 @@ def train_model(
 #                     positive_probs.cpu().numpy().tolist()
 #                 )
 
-#             # -----------------------------
-#             # Multi-class Classification
-#             # -----------------------------
+#             # ----------------------------------------
+#             # Multi-Class Classification
+#             # ----------------------------------------
+
 #             else:
 
 #                 predicted = torch.argmax(
@@ -146,14 +183,30 @@ def train_model(
 #                 labels.cpu().numpy().tolist()
 #             )
 
+#     # ===================================================
+#     # Accuracy
+#     # ===================================================
+
 #     accuracy = accuracy_score(
 #         actuals,
 #         predictions,
 #     )
 
 #     print("=" * 60)
-#     print(f"Accuracy : {accuracy*100:.2f}%")
+#     print(f"Accuracy : {accuracy * 100:.2f}%")
 #     print("=" * 60)
+
+#     # ===================================================
+#     # Classification Report
+#     # ===================================================
+
+#     report = classification_report(
+#         actuals,
+#         predictions,
+#         target_names=class_names,
+#         zero_division=0,
+#         output_dict=True,
+#     )
 
 #     print("\nClassification Report\n")
 
@@ -166,6 +219,10 @@ def train_model(
 #         )
 #     )
 
+#     # ===================================================
+#     # Confusion Matrix
+#     # ===================================================
+
 #     cm = confusion_matrix(
 #         actuals,
 #         predictions,
@@ -174,20 +231,30 @@ def train_model(
 #     print("\nConfusion Matrix\n")
 #     print(cm)
 
-#     # ------------------------------------
-#     # ROC-AUC
-#     # ------------------------------------
+#     tn, fp, fn, tp = cm.ravel()
+
+#     # ===================================================
+#     # ROC-AUC + False Reversal Rate
+#     # ===================================================
+
+#     roc_auc = None
+#     false_reversal_rate = None
 
 #     if len(set(actuals)) == 2:
 
-#         roc = roc_auc_score(
+#         roc_auc = roc_auc_score(
 #             actuals,
 #             probabilities,
 #         )
 
-#         print(f"\nROC-AUC : {roc:.4f}")
+#         print(f"\nROC-AUC : {roc_auc:.4f}")
 
 #         tn, fp, fn, tp = cm.ravel()
+
+#         tnr = tn / (tn + fp)      # Specificity
+#         fpr = fp / (fp + tn)
+#         fnr = fn / (fn + tp)
+#         tpr = tp / (tp + fn)      # Recall
 
 #         false_reversal_rate = (
 #             fp / (fp + tn)
@@ -195,12 +262,12 @@ def train_model(
 
 #         print(
 #             f"False Reversal Rate : "
-#             f"{false_reversal_rate*100:.2f}%"
+#             f"{false_reversal_rate * 100:.2f}%"
 #         )
 
-#     # ------------------------------------
-#     # Average Latency
-#     # ------------------------------------
+#     # ===================================================
+#     # Latency
+#     # ===================================================
 
 #     avg_latency = (
 #         total_latency / total_samples
@@ -213,7 +280,48 @@ def train_model(
 
 #     print("=" * 60)
 
-#     return accuracy
+#     # ===================================================
+#     # Return Metrics
+#     # ===================================================
+
+#     return {
+
+#         "accuracy": accuracy,
+
+#         "precision": report[
+#             "weighted avg"
+#         ]["precision"],
+
+#         "recall": report[
+#             "weighted avg"
+#         ]["recall"],
+
+#         "f1": report[
+#             "weighted avg"
+#         ]["f1-score"],
+
+#         "roc_auc": roc_auc,
+
+#         "latency": avg_latency,
+
+#         "false_reversal_rate": false_reversal_rate,
+
+#         "true_negative": int(tn),
+#         "false_positive": int(fp),
+#         "false_negative": int(fn),
+#         "true_positive": int(tp),
+
+
+#         "true_negative_rate": tnr,
+#         "false_positive_rate": fpr,
+#         "false_negative_rate": fnr,
+#         "true_positive_rate": tpr,
+
+#         "confusion_matrix": cm.tolist(),
+
+#         # "classification_report": report,
+
+#     }
 
 
 def evaluate_model(
@@ -222,6 +330,7 @@ def evaluate_model(
     device,
     class_names=None,
     threshold=0.50,
+    save_curve_data=False,      # <- only True for GRU
 ):
 
     model.eval()
@@ -344,11 +453,16 @@ def evaluate_model(
     tn, fp, fn, tp = cm.ravel()
 
     # ===================================================
-    # ROC-AUC + False Reversal Rate
+    # ROC Metrics
     # ===================================================
 
     roc_auc = None
     false_reversal_rate = None
+
+    tnr = None
+    fpr = None
+    fnr = None
+    tpr = None
 
     if len(set(actuals)) == 2:
 
@@ -359,20 +473,16 @@ def evaluate_model(
 
         print(f"\nROC-AUC : {roc_auc:.4f}")
 
-        tn, fp, fn, tp = cm.ravel()
-
-        tnr = tn / (tn + fp)      # Specificity
+        tnr = tn / (tn + fp)
         fpr = fp / (fp + tn)
         fnr = fn / (fn + tp)
-        tpr = tp / (tp + fn)      # Recall
+        tpr = tp / (tp + fn)
 
-        false_reversal_rate = (
-            fp / (fp + tn)
-        )
+        false_reversal_rate = fpr
 
         print(
             f"False Reversal Rate : "
-            f"{false_reversal_rate * 100:.2f}%"
+            f"{false_reversal_rate*100:.2f}%"
         )
 
     # ===================================================
@@ -391,24 +501,18 @@ def evaluate_model(
     print("=" * 60)
 
     # ===================================================
-    # Return Metrics
+    # Metrics
     # ===================================================
 
-    return {
+    metrics = {
 
         "accuracy": accuracy,
 
-        "precision": report[
-            "weighted avg"
-        ]["precision"],
+        "precision": report["weighted avg"]["precision"],
 
-        "recall": report[
-            "weighted avg"
-        ]["recall"],
+        "recall": report["weighted avg"]["recall"],
 
-        "f1": report[
-            "weighted avg"
-        ]["f1-score"],
+        "f1": report["weighted avg"]["f1-score"],
 
         "roc_auc": roc_auc,
 
@@ -421,14 +525,22 @@ def evaluate_model(
         "false_negative": int(fn),
         "true_positive": int(tp),
 
-
         "true_negative_rate": tnr,
         "false_positive_rate": fpr,
         "false_negative_rate": fnr,
         "true_positive_rate": tpr,
 
         "confusion_matrix": cm.tolist(),
-
-        # "classification_report": report,
-
     }
+
+    # ---------------------------------------------------
+    # Optional curve data (GRU only)
+    # ---------------------------------------------------
+
+    if save_curve_data:
+
+        metrics["actuals"] = actuals
+        metrics["probabilities"] = probabilities
+        metrics["predictions"] = predictions
+
+    return metrics
