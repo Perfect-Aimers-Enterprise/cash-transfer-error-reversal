@@ -423,9 +423,5 @@ save_model(
     num_layers=2,
     num_classes=num_classes,
     classes=list(encoders["reversal_reason"].classes_),
-    **metrics,
-    loss_history=loss_history,
-    accuracy_history=accuracy_history,
-    roc_auc_history=roc_auc_history
 )
 print("\nReason Classification Model Saved.")

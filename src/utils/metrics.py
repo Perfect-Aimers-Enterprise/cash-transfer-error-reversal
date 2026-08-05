@@ -30,6 +30,7 @@ def save_metrics(
 
     actuals=None,
     probabilities=None,
+    predictions=None,
 ):
 
     metrics = {
@@ -97,6 +98,9 @@ def save_metrics(
     if probabilities is not None:
         metrics["probabilities"] = probabilities
 
+    if predictions is not None:
+        metrics["predictions"] = predictions
+        
     # ----------------------------------
     # Save
     # ----------------------------------
