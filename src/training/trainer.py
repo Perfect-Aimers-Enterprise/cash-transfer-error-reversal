@@ -9,7 +9,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 def train_model(
     model,
     train_loader,
@@ -22,11 +21,16 @@ def train_model(
 
     model.to(device)
 
+    loss_history = []
+    accuracy_history = []
+
     for epoch in range(epochs):
 
         model.train()
 
         running_loss = 0.0
+        correct = 0
+        total = 0
 
         for features, labels in train_loader:
 
@@ -45,15 +49,27 @@ def train_model(
 
             running_loss += loss.item()
 
+            _, predicted = torch.max(outputs, 1)
+
+            correct += (predicted == labels).sum().item()
+
+            total += labels.size(0)
+
         avg_loss = running_loss / len(train_loader)
+        train_accuracy = correct / total
+
+        loss_history.append(avg_loss)
+        accuracy_history.append(train_accuracy)
 
         print(
-            f"Epoch [{epoch+1}/{epochs}] "
-            f"Loss: {avg_loss:.4f}"
+            f"Epoch [{epoch + 1}/{epochs}] "
+            f"Loss: {avg_loss:.4f} "
+            f"Accuracy: {train_accuracy * 100:.2f}%"
         )
 
     print("\nTraining Finished!\n")
 
+    return loss_history, accuracy_history
 
 # def evaluate_model(
 #     model,

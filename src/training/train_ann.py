@@ -157,7 +157,7 @@ optimizer = optim.AdamW(
 # Train
 # ----------------------------------------
 
-train_model(
+loss_history, accuracy_history = train_model(
     model,
     train_loader,
     criterion,
@@ -181,8 +181,10 @@ metrics = evaluate_model(
 )
 
 save_metrics(
-    model_name="ANN",
+    model_name="ann",
     **metrics,
+    loss_history=loss_history,
+    accuracy_history=accuracy_history,
 )
 
 # ----------------------------------------
