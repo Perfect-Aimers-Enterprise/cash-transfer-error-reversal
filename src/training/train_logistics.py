@@ -181,7 +181,7 @@ metrics = evaluate_model(
 )
 
 save_metrics(
-    model_name="Logistic Regression",
+    model_name="logistic",
     **metrics,
     loss_history=loss_history,
     accuracy_history=accuracy_history,
