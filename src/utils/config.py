@@ -31,6 +31,8 @@ LOGISTICS_SCALER_PATH = BASE_DIR / "saved_models/logistics_error_scaler.pkl"
 ANN_SCALER_PATH = BASE_DIR / "saved_models/ann_error_scaler.pkl"
 REASON_SCALER_PATH = BASE_DIR / "saved_models/reason_scaler.pkl"
 
+METRIC_DIR = BASE_DIR / "src/metrics"
+
 # ===========================
 # Training
 # ===========================

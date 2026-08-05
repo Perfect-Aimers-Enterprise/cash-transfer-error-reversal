@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 
-METRIC_DIR = Path("metrics")
-METRIC_DIR.mkdir(exist_ok=True)
+from src.utils.config import METRIC_DIR
 
 
 def save_metrics(

@@ -429,6 +429,6 @@ def evaluate_model(
 
         "confusion_matrix": cm.tolist(),
 
-        "classification_report": report,
+        # "classification_report": report,
 
     }
