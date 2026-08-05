@@ -12,10 +12,9 @@ from src.preprocessing.preprocess import (
     save_encoders,
 )
 
-from src.preprocessing.sequence import create_sequences
 from src.preprocessing.dataset import TransactionDataset
 
-from src.models.gru import GRUClassifier
+from src.models.logistic_regression import LogisticRegressionClassifier
 
 from src.training.trainer import (
     train_model,
@@ -31,9 +30,9 @@ from src.utils.scaler import (
 )
 
 from src.utils.config import (
-    ERROR_MODEL_PATH,
-    ERROR_ENCODER_PATH,
-    ERROR_SCALER_PATH,
+    ANN_MODEL_PATH,
+    ANN_ENCODER_PATH,
+    ANN_SCALER_PATH,
     BATCH_SIZE,
     LEARNING_RATE,
     EPOCHS,
@@ -59,7 +58,7 @@ df, encoders = preprocess(df)
 
 save_encoders(
     encoders,
-    ERROR_ENCODER_PATH,
+    ANN_ENCODER_PATH,
 )
 
 # ----------------------------------------
@@ -80,35 +79,30 @@ feature_columns = [
 print(df["error_flag"].value_counts())
 print(df["error_flag"].value_counts(normalize=True) * 100)
 
-X, y = create_sequences(
-    df=df,
-    feature_columns=feature_columns,
-    target_column="error_flag",
-    sequence_length=10,
-)
+feature_columns = [
+    "amount",
+    "timestamp",
+    "channel",
+    "location",
+]
 
-print("Sequence Shape:", X.shape)
+X = df[feature_columns].values
+
+y = df["error_flag"].values
+
 
 # ----------------------------------------
 # Scale features
 # ----------------------------------------
 
-samples, seq_len, features = X.shape
 
-X_flat = X.reshape(-1, features)
-
-X_flat, scaler = fit_scaler(X_flat)
+X, scaler = fit_scaler(X)
 
 save_scaler(
     scaler,
-    ERROR_SCALER_PATH,
+    ANN_SCALER_PATH,
 )
 
-X = X_flat.reshape(
-    samples,
-    seq_len,
-    features,
-)
 
 # ----------------------------------------
 # Split
@@ -147,11 +141,8 @@ test_loader = DataLoader(
 # Model
 # ----------------------------------------
 
-model = GRUClassifier(
-    input_size=features,
-    hidden_size=64,
-    num_layers=2,
-    num_classes=2,
+model = LogisticRegressionClassifier(
+    input_size=X_train.shape[1],
 ).to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -189,9 +180,8 @@ metrics = evaluate_model(
     ],
 )
 
-
 save_metrics(
-    model_name="GRU",
+    model_name="ANN",
     **metrics,
 )
 
@@ -199,15 +189,17 @@ save_metrics(
 # Save
 # ----------------------------------------
 
-
 save_model(
     model=model,
-    model_path=ERROR_MODEL_PATH,
-    input_size=X_train.shape[2],
-    hidden_size=64,
-    num_layers=2,
+    model_path=ANN_MODEL_PATH,
+    input_size=X_train.shape[1],
     num_classes=2,
-    classes=["No Error", "Error"],
+    classes=[
+        "No Error",
+        "Error",
+    ],
+    hidden_size=None,
+    num_layers=None,
 )
 
 print("\nError Detection Model Saved.")

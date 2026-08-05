@@ -6,6 +6,8 @@ numpy
 
 scikit-learn
 
+matplotlib==3.10.5
+
 fastapi
 
 uvicorn

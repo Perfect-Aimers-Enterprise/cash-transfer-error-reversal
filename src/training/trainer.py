@@ -55,6 +55,151 @@ def train_model(
     print("\nTraining Finished!\n")
 
 
+# def evaluate_model(
+#     model,
+#     test_loader,
+#     device,
+#     class_names=None,
+#     threshold=0.50,
+# ):
+
+#     model.eval()
+
+#     predictions = []
+#     probabilities = []
+#     actuals = []
+
+#     total_latency = 0.0
+#     total_samples = 0
+
+#     with torch.no_grad():
+
+#         for features, labels in test_loader:
+
+#             features = features.to(device)
+#             labels = labels.to(device)
+
+#             start = time.perf_counter()
+
+#             outputs = model(features)
+
+#             end = time.perf_counter()
+
+#             total_latency += (end - start)
+#             total_samples += features.size(0)
+
+#             probs = torch.softmax(
+#                 outputs,
+#                 dim=1,
+#             )
+
+#             # -----------------------------
+#             # Binary Classification
+#             # -----------------------------
+#             if outputs.shape[1] == 2:
+
+#                 positive_probs = probs[:, 1]
+
+#                 predicted = (
+#                     positive_probs >= threshold
+#                 ).long()
+
+#                 probabilities.extend(
+#                     positive_probs.cpu().numpy().tolist()
+#                 )
+
+#             # -----------------------------
+#             # Multi-class Classification
+#             # -----------------------------
+#             else:
+
+#                 predicted = torch.argmax(
+#                     probs,
+#                     dim=1,
+#                 )
+
+#                 probabilities.extend(
+#                     probs.max(dim=1).values.cpu().numpy().tolist()
+#                 )
+
+#             predictions.extend(
+#                 predicted.cpu().numpy().tolist()
+#             )
+
+#             actuals.extend(
+#                 labels.cpu().numpy().tolist()
+#             )
+
+#     accuracy = accuracy_score(
+#         actuals,
+#         predictions,
+#     )
+
+#     print("=" * 60)
+#     print(f"Accuracy : {accuracy*100:.2f}%")
+#     print("=" * 60)
+
+#     print("\nClassification Report\n")
+
+#     print(
+#         classification_report(
+#             actuals,
+#             predictions,
+#             target_names=class_names,
+#             zero_division=0,
+#         )
+#     )
+
+#     cm = confusion_matrix(
+#         actuals,
+#         predictions,
+#     )
+
+#     print("\nConfusion Matrix\n")
+#     print(cm)
+
+#     # ------------------------------------
+#     # ROC-AUC
+#     # ------------------------------------
+
+#     if len(set(actuals)) == 2:
+
+#         roc = roc_auc_score(
+#             actuals,
+#             probabilities,
+#         )
+
+#         print(f"\nROC-AUC : {roc:.4f}")
+
+#         tn, fp, fn, tp = cm.ravel()
+
+#         false_reversal_rate = (
+#             fp / (fp + tn)
+#         )
+
+#         print(
+#             f"False Reversal Rate : "
+#             f"{false_reversal_rate*100:.2f}%"
+#         )
+
+#     # ------------------------------------
+#     # Average Latency
+#     # ------------------------------------
+
+#     avg_latency = (
+#         total_latency / total_samples
+#     ) * 1000
+
+#     print(
+#         f"Average Latency : "
+#         f"{avg_latency:.4f} ms/transaction"
+#     )
+
+#     print("=" * 60)
+
+#     return accuracy
+
+
 def evaluate_model(
     model,
     test_loader,
@@ -93,9 +238,10 @@ def evaluate_model(
                 dim=1,
             )
 
-            # -----------------------------
+            # ----------------------------------------
             # Binary Classification
-            # -----------------------------
+            # ----------------------------------------
+
             if outputs.shape[1] == 2:
 
                 positive_probs = probs[:, 1]
@@ -108,9 +254,10 @@ def evaluate_model(
                     positive_probs.cpu().numpy().tolist()
                 )
 
-            # -----------------------------
-            # Multi-class Classification
-            # -----------------------------
+            # ----------------------------------------
+            # Multi-Class Classification
+            # ----------------------------------------
+
             else:
 
                 predicted = torch.argmax(
@@ -130,14 +277,30 @@ def evaluate_model(
                 labels.cpu().numpy().tolist()
             )
 
+    # ===================================================
+    # Accuracy
+    # ===================================================
+
     accuracy = accuracy_score(
         actuals,
         predictions,
     )
 
     print("=" * 60)
-    print(f"Accuracy : {accuracy*100:.2f}%")
+    print(f"Accuracy : {accuracy * 100:.2f}%")
     print("=" * 60)
+
+    # ===================================================
+    # Classification Report
+    # ===================================================
+
+    report = classification_report(
+        actuals,
+        predictions,
+        target_names=class_names,
+        zero_division=0,
+        output_dict=True,
+    )
 
     print("\nClassification Report\n")
 
@@ -150,6 +313,10 @@ def evaluate_model(
         )
     )
 
+    # ===================================================
+    # Confusion Matrix
+    # ===================================================
+
     cm = confusion_matrix(
         actuals,
         predictions,
@@ -158,20 +325,30 @@ def evaluate_model(
     print("\nConfusion Matrix\n")
     print(cm)
 
-    # ------------------------------------
-    # ROC-AUC
-    # ------------------------------------
+    tn, fp, fn, tp = cm.ravel()
+
+    # ===================================================
+    # ROC-AUC + False Reversal Rate
+    # ===================================================
+
+    roc_auc = None
+    false_reversal_rate = None
 
     if len(set(actuals)) == 2:
 
-        roc = roc_auc_score(
+        roc_auc = roc_auc_score(
             actuals,
             probabilities,
         )
 
-        print(f"\nROC-AUC : {roc:.4f}")
+        print(f"\nROC-AUC : {roc_auc:.4f}")
 
         tn, fp, fn, tp = cm.ravel()
+
+        tnr = tn / (tn + fp)      # Specificity
+        fpr = fp / (fp + tn)
+        fnr = fn / (fn + tp)
+        tpr = tp / (tp + fn)      # Recall
 
         false_reversal_rate = (
             fp / (fp + tn)
@@ -179,12 +356,12 @@ def evaluate_model(
 
         print(
             f"False Reversal Rate : "
-            f"{false_reversal_rate*100:.2f}%"
+            f"{false_reversal_rate * 100:.2f}%"
         )
 
-    # ------------------------------------
-    # Average Latency
-    # ------------------------------------
+    # ===================================================
+    # Latency
+    # ===================================================
 
     avg_latency = (
         total_latency / total_samples
@@ -197,4 +374,45 @@ def evaluate_model(
 
     print("=" * 60)
 
-    return accuracy
+    # ===================================================
+    # Return Metrics
+    # ===================================================
+
+    return {
+
+        "accuracy": accuracy,
+
+        "precision": report[
+            "weighted avg"
+        ]["precision"],
+
+        "recall": report[
+            "weighted avg"
+        ]["recall"],
+
+        "f1": report[
+            "weighted avg"
+        ]["f1-score"],
+
+        "roc_auc": roc_auc,
+
+        "latency": avg_latency,
+
+        "false_reversal_rate": false_reversal_rate,
+
+        "true_negative": int(tn),
+        "false_positive": int(fp),
+        "false_negative": int(fn),
+        "true_positive": int(tp),
+
+
+        "true_negative_rate": tnr,
+        "false_positive_rate": fpr,
+        "false_negative_rate": fnr,
+        "true_positive_rate": tpr,
+
+        "confusion_matrix": cm.tolist(),
+
+        "classification_report": report,
+
+    }
