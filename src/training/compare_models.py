@@ -12,7 +12,15 @@ PLOT_DIR = Path("plots")
 PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
 models = []
+# for file in METRIC_DIR.glob("*.json"):
+    # with open(file, "r", encoding="utf-8") as f:
+    #     models.append(json.load(f))
 for file in METRIC_DIR.glob("*.json"):
+
+    if file.stat().st_size == 0:
+        print(f"Skipping empty file: {file}")
+        continue
+
     with open(file, "r", encoding="utf-8") as f:
         models.append(json.load(f))
 
