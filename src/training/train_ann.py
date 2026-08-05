@@ -14,7 +14,7 @@ from src.preprocessing.preprocess import (
 
 from src.preprocessing.dataset import TransactionDataset
 
-from src.models.logistic_regression import LogisticRegressionClassifier
+from src.models.ann import ANNClassifier
 
 from src.training.trainer import (
     train_model,
@@ -141,7 +141,7 @@ test_loader = DataLoader(
 # Model
 # ----------------------------------------
 
-model = LogisticRegressionClassifier(
+model = ANNClassifier(
     input_size=X_train.shape[1],
 ).to(device)
 
