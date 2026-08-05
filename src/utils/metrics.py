@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 from src.utils.config import METRIC_DIR
 
@@ -27,7 +26,12 @@ def save_metrics(
 
     loss_history=None,
     accuracy_history=None,
+    roc_auc_history=None,
+
+    actuals=None,
+    probabilities=None,
 ):
+
     metrics = {
 
         "model": model_name,
@@ -68,14 +72,34 @@ def save_metrics(
         "true_negative_rate": true_negative_rate,
         "false_positive_rate": false_positive_rate,
         "false_negative_rate": false_negative_rate,
-
-        # ----------------------------------
-        # Training History
-        # ----------------------------------
-
-        "loss_history": loss_history or [],
-        "accuracy_history": accuracy_history or [],
     }
+
+    # ----------------------------------
+    # Optional Training History
+    # ----------------------------------
+
+    if loss_history is not None:
+        metrics["loss_history"] = loss_history
+
+    if accuracy_history is not None:
+        metrics["accuracy_history"] = accuracy_history
+
+    if roc_auc_history is not None:
+        metrics["roc_auc_history"] = roc_auc_history
+
+    # ----------------------------------
+    # Optional Curve Data
+    # ----------------------------------
+
+    if actuals is not None:
+        metrics["actuals"] = actuals
+
+    if probabilities is not None:
+        metrics["probabilities"] = probabilities
+
+    # ----------------------------------
+    # Save
+    # ----------------------------------
 
     with open(
         METRIC_DIR / f"{model_name}.json",

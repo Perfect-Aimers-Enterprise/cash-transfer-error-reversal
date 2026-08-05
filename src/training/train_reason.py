@@ -367,7 +367,7 @@ optimizer = optim.AdamW(
 # Train
 # -----------------------------------
 
-train_model(
+loss_history, accuracy_history, roc_auc_history = train_model(
     model,
     train_loader,
     criterion,
@@ -395,7 +395,7 @@ class_names = [
     for c in classes_present
 ]
 
-evaluate_model(
+metrics = evaluate_model(
     model,
     test_loader,
     device,
@@ -423,5 +423,9 @@ save_model(
     num_layers=2,
     num_classes=num_classes,
     classes=list(encoders["reversal_reason"].classes_),
+    **metrics,
+    loss_history=loss_history,
+    accuracy_history=accuracy_history,
+    roc_auc_history=roc_auc_history
 )
 print("\nReason Classification Model Saved.")
