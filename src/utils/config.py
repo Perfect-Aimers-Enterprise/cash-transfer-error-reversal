@@ -33,6 +33,12 @@ REASON_SCALER_PATH = BASE_DIR / "saved_models/reason_scaler.pkl"
 
 METRIC_DIR = BASE_DIR / "src/metrics"
 
+ABLATION_MODEL_PATH = "saved_models/gru_ablation.pth"
+
+ABLATION_SCALER_PATH = "saved_models/gru_ablation_scaler.pkl"
+
+ABLATION_ENCODER_PATH = "saved_models/gru_ablation_encoder.pkl"
+
 # ===========================
 # Training
 # ===========================
